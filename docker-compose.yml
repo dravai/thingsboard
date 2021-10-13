@@ -1,0 +1,18 @@
+version: '3.5'
+
+services:
+        postgres:
+                image: postgres:12.7
+                container_name: iotop-ang9-postgres
+                environment:
+                        - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+                        - "PGTZ=Europe/Budapest"
+                        - "TZ=Europe/Budapest"
+                ports:
+                        - 5432:5432
+                volumes:
+                        - iotop-ang9-postgres_data:/var/lib/postgresql/data
+
+volumes:
+        iotop-ang9-postgres_data:
+

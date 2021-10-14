@@ -235,6 +235,8 @@ export class WidgetContext {
   hiddenData?: Array<{data: DataSet}>;
   timeWindow?: WidgetTimewindow;
 
+  total: number;
+
   hideTitlePanel = false;
 
   widgetTitle?: string;
@@ -355,6 +357,10 @@ export class WidgetContext {
 
   pageLink(pageSize: number, page: number = 0, textSearch: string = null, sortOrder: SortOrder = null): PageLink {
     return new PageLink(pageSize, page, textSearch, sortOrder);
+  };
+
+  getExportData() {
+    return this.widget.getExportData();
   }
 }
 

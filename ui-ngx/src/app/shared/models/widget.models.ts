@@ -515,6 +515,7 @@ export interface Widget extends WidgetInfo{
   row: number;
   col: number;
   config: WidgetConfig;
+  getExportData?;
 }
 
 export interface WidgetInfo {

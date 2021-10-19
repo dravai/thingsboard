@@ -56,6 +56,7 @@ import { distinct } from 'rxjs/operators';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetComponentAction, WidgetComponentActionType } from '@home/components/widget/widget-container.component';
+import { ImportExportService } from '../import-export/import-export.service';
 
 @Component({
   selector: 'tb-dashboard',
@@ -177,6 +178,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
               public utils: UtilsService,
               private timeService: TimeService,
               private dialogService: DialogService,
+              private exportServie: ImportExportService,
               private breakpointObserver: BreakpointObserver,
               private differs: IterableDiffers,
               private kvDiffers: KeyValueDiffers,
@@ -419,6 +421,12 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
     if (this.isExportActionEnabled && this.callbacks && this.callbacks.onExportWidget) {
       this.callbacks.onExportWidget($event, widget.widget);
+    }
+  }
+
+  onExportWidgetData(widget: DashboardWidget) {
+    if (widget.widget.config.enableDataExport) {
+      this.exportServie.exportWidgetData(widget);
     }
   }
 

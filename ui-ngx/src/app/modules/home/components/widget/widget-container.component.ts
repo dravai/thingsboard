@@ -87,6 +87,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit {
   @Output()
   widgetComponentAction: EventEmitter<WidgetComponentAction> = new EventEmitter<WidgetComponentAction>();
 
+  @Output()
+  exportWidgetDataAction: EventEmitter<DashboardWidget> = new EventEmitter<DashboardWidget>();
+
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef) {
     super(store);
@@ -148,6 +151,10 @@ export class WidgetContainerComponent extends PageComponent implements OnInit {
       event,
       actionType: WidgetComponentActionType.REMOVE
     });
+  }
+
+  onExportDataClicked() {
+    this.exportWidgetDataAction.emit(this.widget);
   }
 
 }

@@ -44,7 +44,7 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
-import { FileType, ImportWidgetResult, JSON_TYPE, WidgetsBundleItem, ZIP_TYPE } from './import-export.models';
+import { FileType, ImportWidgetResult, JSON_TYPE, WidgetsBundleItem, ZIP_TYPE, CSV_TYPE } from './import-export.models';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
@@ -59,6 +59,8 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfile } from '@shared/models/device.models';
 import { TenantProfile } from '@shared/models/tenant.model';
 import { TenantProfileService } from '@core/http/tenant-profile.service';
+import moment from 'moment';
+import { DashboardWidget } from '../../models/dashboard-component.models';
 
 // @dynamic
 @Injectable()
@@ -508,6 +510,87 @@ export class ImportExportService {
       });
     });
   }
+
+  // export widget data
+  public exportWidgetData(widget: DashboardWidget) {
+    const ctx = widget.widgetContext;
+    const defaultSubscription = ctx.defaultSubscription;
+    let allRows = [];
+    if (isDefined(ctx.getExportData)) {
+        allRows = ctx.getExportData();
+    } else {
+        allRows = this.getExportData(defaultSubscription);
+    }
+    allRows = allRows.sort((a, b) => a[0] - b[0]);
+    allRows.forEach(this.unixTimeToString);
+    allRows.unshift(this.getHeader(defaultSubscription));
+    const csvContent = this.arrayToCsv(allRows);
+    const blob = new Blob([csvContent], {type: 'text/csv'});
+    const filename = widget.widget.config.title || 'widget-data';
+    this.downloadFile(blob, filename, CSV_TYPE);
+  }
+
+  private getExportData(defaultSubscription) {
+      let allRows = [];
+      let keyOffset = 0;
+      if (isDefined(defaultSubscription.datasources)) {
+        defaultSubscription.datasources.forEach(datasource => {
+          const keyStartIndex = keyOffset;
+          keyOffset += datasource.dataKeys.length;
+          const columnsData = defaultSubscription.data.slice(keyStartIndex, keyOffset);
+          allRows = allRows.concat(this.mergeColumnsData(columnsData));
+        });
+      } else if (isDefined(defaultSubscription.alarms)) {
+        allRows = defaultSubscription.alarms.data;
+      }
+      return allRows;
+  }
+
+  private mergeColumnsData(columnsData) {
+      const rowsMap = {};
+      columnsData.forEach((columnData, columnIndex) => {
+          for (const data of columnData.data) {
+              const timestamp = data[0];
+              const cellData = data[1];
+              let row = rowsMap[timestamp];
+              if (!row) {
+                  row = new Array(columnData.datasource.dataKeys.length + 2);
+                  rowsMap[timestamp] = row;
+                  row[0] = timestamp;
+                  row[row.length - 1] = columnData.datasource.entityName;
+              }
+              row[columnIndex + 1] = cellData;
+          }
+      });
+      const rowData = [];
+      Object.keys(rowsMap).forEach(key => rowData.push(rowsMap[key]));
+      return rowData;
+  }
+
+  private unixTimeToString(row) {
+      row[0] = moment(new Date(row[0])).format('YYYY-MM-DD HH:mm:ss');
+  }
+
+  private getHeader(defaultSubscription) {
+    if (isDefined(defaultSubscription.datasources)) {
+      const header = ['"timestamp"'];
+      defaultSubscription.datasources[0].dataKeys.forEach(dataKey => header.push('"' + dataKey.name + '"'));
+      header.push('"__source__"');
+      return header;
+    }
+    return defaultSubscription.alarmSource.dataKeys.map(dataKey => '"' + dataKey.name + '"');
+  }
+
+  private arrayToCsv(rows) {
+      let content = '';
+      rows.forEach((cols, idx) => {
+          const line = cols.join(',');
+          content += idx < rows.length ? line + '\n' : line;
+      });
+      return content;
+  }
+
+  // widget data export till here -------------------------------------------------------------
 
   private prepareRuleChain(ruleChain: RuleChain): RuleChain {
     ruleChain = this.prepareExport(ruleChain);

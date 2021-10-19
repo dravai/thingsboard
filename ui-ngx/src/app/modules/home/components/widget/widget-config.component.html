@@ -352,6 +352,9 @@
             <mat-checkbox formControlName="enableFullscreen">
               {{ 'widget-config.enable-fullscreen' | translate }}
             </mat-checkbox>
+            <mat-checkbox formControlName="enableDataExport" *ngIf="isDataExportVisible()">
+              {{ 'widget-config.enable-data-export' | translate }}
+            </mat-checkbox>
           </div>
           <div fxFlex>
             <tb-json-object-edit
